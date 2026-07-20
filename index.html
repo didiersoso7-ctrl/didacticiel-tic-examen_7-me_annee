@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Didacticiel TIC - Level System Expert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght=400;600;700&family=Caveat:wght=600;700&display=swap');
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            transition: background-color 0.8s ease;
+        }
+        
+        .dev-signature {
+            font-family: 'Caveat', cursive;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        
+        @keyframes fallFlower {
+            0% { transform: translateY(-20vh) rotate(0deg) scale(0.5); opacity: 0; }
+            15% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(115vh) rotate(360deg) scale(1.1); opacity: 0; }
+        }
+
+        .flower-item {
+            position: absolute;
+            top: 0;
+            pointer-events: none;
+            z-index: 5;
+            animation: fallFlower 7s linear infinite;
+        }
+
+        @keyframes fallRain {
+            0% { transform: translateY(-10vh) translateX(0); opacity: 0.2; }
+            100% { transform: translateY(110vh) translateX(-10px); opacity: 0.8; }
+        }
+
+        .rain-drop {
+            position: absolute;
+            background: linear-gradient(transparent, #38bdf8);
+            width: 1.5px;
+            height: 35px;
+            opacity: 0.7;
+            z-index: 5;
+            pointer-events: none;
+            animation: fallRain 1.2s linear infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        .shake-element {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-[#070b13] text-slate-100 min-h-screen flex items-center justify-center p-3 relative overflow-hidden">
+
+    <div id="visual-effects-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <!-- Cadre Principal -->
+    <div id="main-card" class="max-w-lg w-full bg-[#0d1321]/95 backdrop-blur-md p-5 sm:p-6 pb-9 sm:pb-10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.7)] border border-slate-800 transition-all duration-700 relative z-20">
+        
+        <!-- 1. Ecran de Connexion -->
+        <div id="login-screen" class="text-center py-4">
+            <div class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3">
+                🏫 Enregistrement Élève
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-2">
+                Bienvenue au Didacticiel
+            </h1>
+            <p class="text-slate-400 text-xs mb-6">Veuillez renseigner vos informations pour commencer.</p>
+            
+            <div class="space-y-5 text-left mb-6">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Votre Nom complet :</label>
+                    <input type="text" id="user-name-input" placeholder="Ex: Didier" class="w-full bg-slate-900/60 border border-slate-700/60 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition duration-200">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sélectionnez votre civilité pour démarrer :</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="selectGenderAndSubmit('M')" class="border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800 hover:text-white text-xs font-semibold py-4 rounded-xl transition duration-150 text-center flex flex-col items-center justify-center gap-1">
+                            <span class="text-xl">👨</span>
+                            <span>Monsieur</span>
+                        </button>
+                        <button type="button" onclick="selectGenderAndSubmit('F')" class="border border-slate-700/60 bg-slate-900/40 hover:bg-pink-950/30 hover:text-white text-xs font-semibold py-4 rounded-xl transition duration-150 text-center flex flex-col items-center justify-center gap-1">
+                            <span class="text-xl">👩</span>
+                            <span>Mademoiselle</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Ecran d'Accueil / Menu -->
+        <div id="home-screen" class="hidden text-center py-2">
+            <div class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3">
+                🎮 Mode Campagne TIC
+            </div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 mb-1">
+                Didacticiel TIC
+            </h1>
+            
+            <p id="welcome-message" class="text-slate-300 text-xs mb-3 font-semibold">Bonjour, élève !</p>
+
+            <div class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-2.5 mb-5 text-center">
+                <p class="text-[11px] text-indigo-300 font-medium">
+                    ℹ️ Ce didacticiel a été conçu pour tester le niveau des apprenants de <strong class="text-white">7ème année</strong>.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-2.5 mb-6 text-left">
+                <div id="status-l1" onclick="startLevel(1)" class="bg-blue-950/20 border border-blue-500/30 p-3 rounded-xl cursor-pointer hover:scale-[1.02] transition-all duration-200">
+                    <span class="block text-[10px] text-blue-400 font-bold">LEVEL 1</span>
+                    <span class="block text-xs font-bold text-slate-200">Facile</span>
+                    <span class="text-[9px] text-slate-400">4 Q</span>
+                </div>
+                <div id="status-l2" onclick="startLevel(2)" class="bg-slate-900/10 border border-slate-800/30 p-3 rounded-xl opacity-40 transition-all duration-200 cursor-not-allowed">
+                    <span class="block text-[10px] text-purple-400 font-bold">LEVEL 2</span>
+                    <span id="label-l2" class="block text-xs font-bold text-slate-400">Moyen 🔒</span>
+                    <span class="text-[9px] text-slate-500">5 Q</span>
+                </div>
+                <div id="status-l3" onclick="startLevel(3)" class="bg-slate-900/10 border border-slate-800/30 p-3 rounded-xl opacity-40 transition-all duration-200 cursor-not-allowed">
+                    <span class="block text-[10px] text-rose-400 font-bold">LEVEL 3</span>
+                    <span id="label-l3" class="block text-xs font-bold text-slate-400">Difficile 🔒</span>
+                    <span class="text-[9px] text-slate-500">7 Q</span>
+                </div>
+            </div>
+
+            <button id="start-btn" onclick="startLevel(1)" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300 shadow-md">
+                Lancer le Level 1 ➔
+            </button>
+        </div>
+
+        <!-- 3. Ecran du Quiz -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-3">
+                <span id="level-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all duration-300">LEVEL 1</span>
+                <span id="question-counter" class="font-bold text-xs transition-all duration-300">Question 1/4</span>
+            </div>
+            
+            <div class="w-full bg-slate-900 rounded-full h-1.5 mb-5 border border-slate-800/60 overflow-hidden">
+                <div id="progress-bar" class="h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <h2 id="question-text" class="text-sm sm:text-base font-bold mb-4 text-slate-100 bg-slate-900/30 p-4 rounded-xl border-l-4 transition-all duration-300 leading-snug">
+                Chargement...
+            </h2>
+
+            <div id="options-container" class="space-y-2.5 mb-5"></div>
+
+            <div class="flex flex-col gap-2.5">
+                <button id="next-btn" onclick="submitAnswer()" disabled class="w-full font-bold py-3 rounded-xl text-xs sm:text-sm transition-all duration-300">
+                    Sélectionnez une réponse
+                </button>
+                <button id="skip-btn" onclick="skipQuestion()" class="w-full bg-slate-800/60 hover:bg-slate-850 border border-slate-700/40 text-slate-400 hover:text-slate-200 font-medium py-2 rounded-xl text-xs transition-all duration-200">
+                    ⏭️ Je ne sais pas / Passer au niveau suivant à la fin
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. Ecran de Résultats par Niveau -->
+        <div id="result-screen" class="hidden text-center py-2">
+            <div id="result-icon" class="text-5xl mb-2 transition-transform duration-500 hover:scale-125">🎉</div>
+            <h1 id="result-title" class="text-xl sm:text-2xl font-extrabold mb-1">Niveau Complété !</h1>
+            
+            <p id="student-salutation" class="text-yellow-400 font-bold text-sm mb-1"></p>
+            <p id="result-subtitle" class="text-slate-400 text-xs mb-3">Votre score pour ce niveau</p>
+            
+            <div class="mb-3">
+                <span id="final-score" class="text-5xl font-extrabold">0 / 0</span>
+            </div>
+
+            <p id="result-status" class="text-sm font-semibold mb-4">Statut...</p>
+
+            <div class="text-left bg-slate-950/80 rounded-xl p-3.5 border border-slate-800/80 max-h-40 overflow-y-auto mb-5 space-y-3">
+                <h3 id="correction-title" class="text-[10px] font-bold uppercase tracking-wider border-b border-slate-800/60 pb-1.5 mb-2">Correction :</h3>
+                <div id="correction-list" class="space-y-3 text-xs"></div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button id="action-btn" onclick="nextAction()" class="w-full text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition duration-150 shadow-md">
+                    Passer au Level Suivant
+                </button>
+                <button id="menu-btn" onclick="goHome()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold py-3 rounded-xl text-xs transition duration-150">
+                    🏠 Menu Principal
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. Ecran du Bilan Global Final -->
+        <div id="final-summary-screen" class="hidden text-center py-2">
+            <div class="text-5xl mb-3">🎓</div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 mb-1">
+                Bilan Global Final
+            </h1>
+            <p id="final-student-salutation" class="text-slate-300 font-bold text-sm mb-4"></p>
+            
+            <div class="bg-slate-950/80 rounded-xl p-4 border border-slate-800 mb-5 text-left space-y-3">
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400 text-xs">Score Global Accumulé :</span>
+                    <span id="global-score-text" class="text-sm font-bold text-yellow-400">0 / 16</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400 text-xs">Questions Répondues :</span>
+                    <span id="global-answered-text" class="text-sm font-bold text-emerald-400">0</span>
+                </div>
+                <div class="flex justify-between pb-1">
+                    <span class="text-slate-400 text-xs">Questions Oubliées / Sautées :</span>
+                    <span id="global-skipped-text" class="text-sm font-bold text-rose-400">0</span>
+                </div>
+            </div>
+
+            <div id="final-evaluation-box" class="p-3.5 rounded-xl border text-xs font-semibold mb-6"></div>
+
+            <button onclick="restartEntireGame()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all duration-300 shadow-lg">
+                🔄 Recommencer le Didacticiel
+            </button>
+        </div>
+
+        <div class="absolute bottom-2 right-4 text-slate-500/70 hover:text-indigo-400 text-sm sm:text-base dev-signature tracking-wide transition-colors duration-300 select-none pointer-events-none">
+            Dm's Soft
+        </div>
+
+    </div>
+
+    <script>
+        let studentName = "";
+        let studentGender = ""; 
+        
+        let scoresHistory = { 1: null, 2: null, 3: null };
+        let skippedHistory = { 1: 0, 2: 0, 3: 0 };
+        let answeredHistory = { 1: 0, 2: 0, 3: 0 };
+
+        // --- MOTEUR AUDIO AUDIO-SYNTH INTEGRÉ ---
+        let audioCtx = null;
+        let backgroundMusicNode = null;
+        let successMusicNode = null;
+        let failMusicNode = null;
+        let motivationInterval = null;
+        let activeInstruments = [];
+        let visualEffectsInterval = null;
+
+        function initMobileAudioEngine() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {
+                console.log("L'API Audio n'est pas supportée ou bloquée temporairement.");
+            }
+        }
+
+        function selectGenderAndSubmit(gender) {
+            const nameInput = document.getElementById("user-name-input").value.trim();
+            if (!nameInput) {
+                alert("Veuillez d'abord entrer votre nom avant de sélectionner votre civilité.");
+                return;
+            }
+
+            studentName = nameInput;
+            studentGender = gender;
+            
+            scoresHistory = { 1: null, 2: null, 3: null };
+            skippedHistory = { 1: 0, 2: 0, 3: 0 };
+            answeredHistory = { 1: 0, 2: 0, 3: 0 };
+
+            initMobileAudioEngine();
+
+            document.getElementById("login-screen").classList.add("hidden");
+            document.getElementById("home-screen").classList.remove("hidden");
+            
+            const prefix = studentGender === 'M' ? "Monsieur" : "Mademoiselle";
+            document.getElementById("welcome-message").innerText = `Bonjour ${prefix} ${studentName}, prêt à relever le défi ?`;
+            
+            try {
+                speak(`Bonjour ${prefix} ${studentName}, bienvenue dans votre didacticiel de T I C conçu pour la septième année !`, 0.01);
+            } catch(e) {}
+        }
+
+        function speak(text, musicVolumeToSet = 0.01) {
+            if (!window.speechSynthesis) return;
+            try {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.95; 
+                utterance.pitch = 1.0;
+
+                setAllMusicVolume(musicVolumeToSet);
+                utterance.onend = function() { resetAllMusicVolume(); };
+                utterance.onerror = function() { resetAllMusicVolume(); };
+
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function resetAllMusicVolume() {
+            setAllMusicVolume(1.0);
+        }
+
+        // --- QUESTIONS ---
+        const LEVELS = {
+            1: [
+                { q: "Qu'est-ce que l'informatique ?", options: { a: "L'art de dessiner avec des crayons", b: "La science du traitement automatique de l'information avec un ordinateur", c: "Le nettoyage des écrans", d: "La réparation mécanique des voitures" }, correct: "b" },
+                { q: "De quels mots vient le mot « Informatique » ?", options: { a: "Information et Théorie", b: "Ordinateur et Automatique", c: "Information et Automatique", d: "Écran et Souris" }, correct: "c" },
+                { q: "Qui a inventé le mot « Informatique » in 1962 ?", options: { a: "Steve Jobs", b: "Charles Babbage", c: "Philippe Dreyfus", d: "Jacques Perret" }, correct: "c" },
+                { q: "Qui a inventé le mot « Ordinateur » en 1955 ?", options: { a: "Philippe Dreyfus", b: "Jacques Perret", c: "Alan Turing", d: "Blaise Pascal" }, correct: "b" }
+            ],
+            2: [
+                { q: "Le mot latin « ordo-ordinis » qui a formé le mot ordinateur signifie :", options: { a: "Machine à calculer", b: "Ordre, arrangement, instruction", c: "Électricité", d: "Dessin" }, correct: "b" },
+                { q: "Parmi ces périphériques, lequel est un périphérique d'ENTRÉE ?", options: { a: "L'imprimante", b: "Le scanner (numériseur)", c: "Le écran simple", d: "Les haut-parleurs" }, correct: "b" },
+                { q: "Quel périphérique est un périphérique de SORTIE ?", options: { a: "Le clavier", b: "Le microphone", c: "Le vidéoprojecteur", d: "Le scanner" }, correct: "c" },
+                { q: "Quelle touche supprime un caractère situé à GAUCHE du curseur ?", options: { a: "Suppr (Delete)", b: "Retour arrière (Backspace)", c: "La barre d'espace", d: "Entrée" }, correct: "b" },
+                { q: "Quel périphérique permet à la fois d'envoyer et de recevoir des informations (MIXTE) ?", options: { a: "Le clavier", b: "La souris", c: "L'écran tactile", d: "L'imprimante classique" }, correct: "c" }
+            ],
+            3: [
+                { q: "Quel type de réseau est limité à une zone géographique restreinte (école, maison) ?", options: { a: "Réseau WAN", b: "Réseau LAN (Réseau local)", c: "Réseau mondial", d: "Le Cloud" }, correct: "b" },
+                { q: "Qu'est-ce qu'un antivirus ?", options: { a: "Un virus plus puissant", b: "Un logiciel qui détecte et détruit les menaces", c: "Un composant physique de la carte mère", d: "Un navigateur web" }, correct: "b" },
+                { q: "Quelle est la définition exacte du mot informatique adoptée par l'Académie Française en 1966 ?", options: { a: "Science de la programmation de jeux vidéo", b: "Science de traitement rationnel et automatique de l'information", c: "Art d'écrire des textes sur ordinateur", d: "Technique de raccordement des câbles" }, correct: "b" },
+                { q: "À quoi sert la touche 'Echap' (Esc) de votre clavier ?", options: { a: "À valider une action", b: "À annuler ou quitter une opération en cours", c: "À faire une capture d'écran", d: "À éteindre l'ordinateur" }, correct: "b" },
+                { q: "Quel est le rôle du système d'exploitation (ex: Windows, Android) ?", options: { a: "Protéger l'ordinateur de la poussière", b: "Gérer et faire fonctionner le matériel et les applications", c: "Créer des tableaux de calculs", d: "Naviguer sur le web uniquement" }, correct: "b" },
+                { q: "Le terme anglais 'Computer science' fait référence à :", options: { a: "L'informatique", b: "L'imprimante", c: "La calculatrice", d: "La physique" }, correct: "a" },
+                { q: "Quelle combinaison de touches permet de copier un élément sélectionné sous Windows ?", options: { a: "Ctrl + V", b: "Ctrl + C", c: "Ctrl + X", d: "Alt + F4" }, correct: "b" }
+            ]
+        };
+
+        const LEVEL_THEMES = {
+            1: { primary: "rgb(59, 130, 246)", bg: "#060b18", border: "rgba(59, 130, 246, 0.3)", glow: "rgba(59, 130, 246, 0.2)", text: "text-blue-400", badge: "bg-blue-500/20 text-blue-300 border-blue-500/30", bar: "bg-gradient-to-r from-blue-500 to-cyan-500" },
+            2: { primary: "rgb(147, 51, 234)", bg: "#0f071e", border: "rgba(147, 51, 234, 0.3)", glow: "rgba(147, 51, 234, 0.2)", text: "text-purple-400", badge: "bg-purple-500/20 text-purple-300 border-purple-500/30", bar: "bg-gradient-to-r from-purple-500 to-pink-500" },
+            3: { primary: "rgb(244, 63, 94)", bg: "#16050b", border: "rgba(244, 63, 94, 0.3)", glow: "rgba(244, 63, 94, 0.2)", text: "text-rose-400", badge: "bg-rose-500/20 text-rose-300 border-rose-500/30", bar: "bg-gradient-to-r from-rose-500 to-orange-500" }
+        };
+
+        const REAL_FLOWERS = ["fleur1.png", "fleur2.png", "fleur3.png"];
+
+        function triggerSynthNote(freq, type, volume, duration, delay = 0) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                
+                gainNode.gain.setValueAtTime(volume, audioCtx.currentTime + delay);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration - 0.02);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start(audioCtx.currentTime + delay);
+                osc.stop(audioCtx.currentTime + delay + duration);
+
+                activeInstruments.push({ gainNode, originalVolume: volume, duration, startTime: audioCtx.currentTime + delay });
+            } catch(e) {}
+        }
+
+        function setAllMusicVolume(factor) {
+            activeInstruments.forEach(inst => {
+                if (audioCtx && audioCtx.currentTime < inst.startTime + inst.duration) {
+                    try {
+                        inst.gainNode.gain.setValueAtTime(inst.originalVolume * factor, audioCtx.currentTime);
+                    } catch(e) {}
+                }
+            });
+        }
+
+        function playCombinedMusicLoop(patterns, tempo) {
+            initMobileAudioEngine();
+            let beatIndex = 0;
+            function runBeat() {
+                if (!audioCtx) return;
+                activeInstruments = activeInstruments.filter(inst => audioCtx.currentTime < inst.startTime + inst.duration);
+
+                patterns.forEach(instrument => {
+                    const currentNote = instrument.notes[beatIndex % instrument.notes.length];
+                    if (Array.isArray(currentNote)) {
+                        currentNote.forEach(freq => { if (freq > 0) triggerSynthNote(freq, instrument.type, instrument.volume, tempo); });
+                    } else if (currentNote > 0) {
+                        triggerSynthNote(currentNote, instrument.type, instrument.volume, tempo);
+                    }
+                });
+                beatIndex++;
+            }
+            runBeat();
+            const interval = setInterval(runBeat, tempo * 1000);
+            return { stop: () => clearInterval(interval) };
+        }
+
+        function playInGameMusic() {
+            stopAllMusic();
+            initMobileAudioEngine();
+            
+            const patterns = [
+                { type: "sine", volume: 0.05, notes: [329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 0] },
+                { type: "triangle", volume: 0.10, notes: [110.00, 110.00, 130.81, 0, 146.83, 146.83, 164.81, 130.81] }
+            ];
+            try {
+                backgroundMusicNode = playCombinedMusicLoop(patterns, 0.32);
+            } catch(e) {}
+            startMotivationSinging();
+        }
+
+        function startMotivationSinging() {
+            if (motivationInterval) clearInterval(motivationInterval);
+            
+            motivationInterval = setInterval(() => {
+                if (document.getElementById("quiz-screen").classList.contains("hidden")) {
+                    clearInterval(motivationInterval);
+                    return;
+                }
+
+                const notesVoix = [261.63, 293.66, 329.63, 392.00, 440.00];
+                let delay = 0;
+                for (let i = 0; i < Math.min(studentName.length, 4); i++) {
+                    const noteAleatoire = notesVoix[Math.floor(Math.random() * notesVoix.length)];
+                    triggerSynthNote(noteAleatoire, "sine", 0.12, 0.25, delay);
+                    delay += 0.22;
+                }
+
+                setTimeout(() => {
+                    const encouragements = [
+                        `Allez ${studentName}, concentre-toi !`,
+                        `C'est super ${studentName}, continue !`,
+                        `Montre ton niveau expert, ${studentName} !`
+                    ];
+                    speak(encouragements[Math.floor(Math.random() * encouragements.length)], 0.03);
+                }, delay * 1000);
+
+            }, 16000); 
+        }
+
+        function playVictoryMusic() {
+            stopAllMusic();
+            const patterns = [
+                { type: "triangle", volume: 0.06, notes: [523.25, 659.25, 783.99, 1046.50, 0, 783.99, 1046.50, 1318.51] },
+                { type: "sine", volume: 0.06, notes: [[261.63, 329.63], [329.63, 392.00], [349.23, 440.00], 0] }
+            ];
+            try {
+                successMusicNode = playCombinedMusicLoop(patterns, 0.30);
+            } catch(e) {}
+        }
+
+        function playFailureMusic() {
+            stopAllMusic();
+            const patterns = [
+                { type: "sine", volume: 0.08, notes: [146.83, 138.59, 130.81, 110.00, 98.00, 0] }
+            ];
+            try {
+                failMusicNode = playCombinedMusicLoop(patterns, 0.50);
+            } catch(e) {}
+        }
+
+        function stopAllMusic() {
+            if (backgroundMusicNode) { backgroundMusicNode.stop(); backgroundMusicNode = null; }
+            if (successMusicNode) { successMusicNode.stop(); successMusicNode = null; }
+            if (failMusicNode) { failMusicNode.stop(); failMusicNode = null; }
+            if (motivationInterval) { clearInterval(motivationInterval); motivationInterval = null; }
+            activeInstruments = [];
+        }
+
+        function startVictoryFlowers() {
+            stopVisualEffects();
+            const container = document.getElementById("visual-effects-container");
+            visualEffectsInterval = setInterval(() => {
+                const img = document.createElement("img");
+                img.className = "flower-item";
+                img.src = REAL_FLOWERS[Math.floor(Math.random() * REAL_FLOWERS.length)];
+                img.style.left = (Math.random() * 80) + "vw";
+                const size = Math.random() * 50 + 65; 
+                img.style.width = size + "px";
+                img.style.animationDuration = (Math.random() * 2 + 4) + "s";
+                container.appendChild(img);
+                setTimeout(() => img.remove(), 6000);
+            }, 400);
+        }
+
+        function startFailureRain() {
+            stopVisualEffects();
+            const container = document.getElementById("visual-effects-container");
+            visualEffectsInterval = setInterval(() => {
+                const drop = document.createElement("div");
+                drop.className = "rain-drop";
+                drop.style.left = Math.random() * 100 + "vw";
+                drop.style.animationDuration = (Math.random() * 0.4 + 0.7) + "s";
+                container.appendChild(drop);
+                setTimeout(() => drop.remove(), 1500);
+            }, 45);
+        }
+
+        function stopVisualEffects() {
+            if (visualEffectsInterval) clearInterval(visualEffectsInterval);
+            document.getElementById("visual-effects-container").innerHTML = "";
+        }
+
+        // --- CAMPAGNE JEU MODIFIÉE ---
+        let currentLevel = 1;
+        let unlockedLevels = [1];
+        let currentIndex = 0;
+        let score = 0;
+        let skippedQuestionsCount = 0;
+        let answeredQuestionsCount = 0;
+        let userAnswers = [];
+        let selectedKey = null;
+
+        function applyTheme(level) {
+            const theme = LEVEL_THEMES[level];
+            document.body.style.backgroundColor = theme.bg;
+            
+            const card = document.getElementById("main-card");
+            card.style.borderColor = theme.primary;
+            card.style.boxShadow = `0 0 35px ${theme.glow}`;
+
+            document.getElementById("level-badge").className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all duration-300 ${theme.badge}`;
+            document.getElementById("level-badge").innerText = `LEVEL ${level}`;
+            document.getElementById("question-counter").className = `font-bold text-xs transition-all duration-300 ${theme.text}`;
+            document.getElementById("question-text").style.borderLeftColor = theme.primary;
+            document.getElementById("progress-bar").className = `h-full rounded-full transition-all duration-300 ${theme.bar}`;
+        }
+
+        function startLevel(lvl) {
+            if (!unlockedLevels.includes(lvl)) return;
+            
+            initMobileAudioEngine(); 
+            stopVisualEffects();
+            stopAllMusic();
+
+            currentLevel = lvl;
+            currentIndex = 0;
+            score = 0;
+            skippedQuestionsCount = 0;
+            answeredQuestionsCount = 0;
+            userAnswers = [];
+            selectedKey = null;
+
+            applyTheme(currentLevel);
+
+            document.getElementById("home-screen").classList.add("hidden");
+            document.getElementById("result-screen").classList.add("hidden");
+            document.getElementById("final-summary-screen").classList.add("hidden");
+            document.getElementById("quiz-screen").classList.remove("hidden");
+            
+            playInGameMusic();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            selectedKey = null;
+            const currentQ = LEVELS[currentLevel][currentIndex];
+            const totalQ = LEVELS[currentLevel].length;
+            
+            document.getElementById("question-counter").innerText = `Question ${currentIndex + 1}/${totalQ}`;
+            document.getElementById("progress-bar").style.width = `${Math.round((currentIndex / totalQ) * 100)}%`;
+            document.getElementById("question-text").innerText = currentQ.q;
+            
+            const container = document.getElementById("options-container");
+            container.innerHTML = "";
+
+            const nextBtn = document.getElementById("next-btn");
+            nextBtn.disabled = true;
+            nextBtn.className = "w-full bg-slate-800 text-slate-500 cursor-not-allowed font-bold py-3 rounded-xl text-xs sm:text-sm transition-all duration-300";
+            nextBtn.innerText = "Sélectionnez une réponse";
+
+            for (const [key, value] of Object.entries(currentQ.options)) {
+                const btn = document.createElement("button");
+                btn.className = "option-btn w-full flex items-center p-3 bg-slate-900/40 hover:bg-slate-800/40 rounded-xl cursor-pointer border border-slate-800/80 transition-all duration-150 text-left";
+                btn.onclick = () => selectOption(key, btn);
+                btn.innerHTML = `
+                    <span class="w-4 h-4 rounded-full border-2 border-slate-600 flex items-center justify-center mr-3 flex-shrink-0 option-radio"></span>
+                    <span class="text-slate-300 text-xs sm:text-sm font-medium"><strong class="mr-1 text-slate-400 uppercase">${key}.</strong> ${value}</span>
+                `;
+                container.appendChild(btn);
+            }
+        }
+
+        function selectOption(key, element) {
+            initMobileAudioEngine(); 
+            selectedKey = key;
+            
+            document.querySelectorAll(".option-btn").forEach(btn => {
+                btn.classList.remove("border-blue-500", "bg-blue-950/20");
+                btn.classList.add("border-slate-800/80", "bg-slate-900/40");
+                btn.querySelector(".option-radio").classList.remove("border-blue-500", "bg-blue-500");
+                btn.querySelector(".option-radio").innerHTML = "";
+            });
+
+            element.classList.remove("border-slate-800/80", "bg-slate-900/40");
+            element.classList.add("border-blue-500", "bg-blue-500/20");
+            
+            const radio = element.querySelector(".option-radio");
+            radio.classList.add("border-blue-500", "bg-blue-500");
+            radio.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div>`;
+
+            const nextBtn = document.getElementById("next-btn");
+            nextBtn.disabled = false;
+            nextBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs sm:text-sm transition-all duration-300 shadow-md cursor-pointer";
+            nextBtn.innerText = (currentIndex === LEVELS[currentLevel].length - 1) ? "Terminer le Niveau" : "Valider la réponse ➔";
+        }
+
+        function skipQuestion() {
+            initMobileAudioEngine();
+            const currentQ = LEVELS[currentLevel][currentIndex];
+            
+            skippedQuestionsCount++;
+            userAnswers.push({
+                question: currentQ.q,
+                chosen: "Sautée",
+                chosenText: "Vous avez ignoré cette question (oublié la réponse).",
+                correct: currentQ.correct,
+                correctText: currentQ.options[currentQ.correct]
+            });
+
+            moveForward();
+        }
+
+        function submitAnswer() {
+            if (!selectedKey) return;
+            initMobileAudioEngine();
+            
+            const currentQ = LEVELS[currentLevel][currentIndex];
+            answeredQuestionsCount++;
+            
+            userAnswers.push({
+                question: currentQ.q,
+                chosen: selectedKey,
+                chosenText: currentQ.options[selectedKey],
+                correct: currentQ.correct,
+                correctText: currentQ.options[currentQ.correct]
+            });
+
+            if (selectedKey === currentQ.correct) score++;
+            moveForward();
+        }
+
+        function moveForward() {
+            currentIndex++;
+            if (currentIndex < LEVELS[currentLevel].length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            stopAllMusic();
+            document.getElementById("quiz-screen").classList.add("hidden");
+            document.getElementById("result-screen").classList.remove("hidden");
+
+            scoresHistory[currentLevel] = score;
+            skippedHistory[currentLevel] = skippedQuestionsCount;
+            answeredHistory[currentLevel] = answeredQuestionsCount;
+
+            const totalQ = LEVELS[currentLevel].length;
+            const prefix = studentGender === 'M' ? "Monsieur" : "Mademoiselle";
+            
+            document.getElementById("student-salutation").innerText = `${prefix} ${studentName}`;
+            document.getElementById("final-score").innerText = `${score} / ${totalQ}`;
+
+            const cList = document.getElementById("correction-list");
+            cList.innerHTML = "";
+
+            userAnswers.forEach((ans, idx) => {
+                const item = document.createElement("div");
+                item.className = "p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/60";
+                
+                if (ans.chosen === "Sautée") {
+                    item.innerHTML = `
+                        <p class="font-bold text-slate-200 mb-1">Q${idx + 1}: ${ans.question}</p>
+                        <p class="text-amber-400 font-medium italic">Sautée / Oubliée</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Réponse correcte : (${ans.correct.toUpperCase()}) ${ans.correctText}</p>
+                    `;
+                } else {
+                    const isCorrect = ans.chosen === ans.correct;
+                    item.innerHTML = `
+                        <p class="font-bold text-slate-200 mb-1">Q${idx + 1}: ${ans.question}</p>
+                        <p class="${isCorrect ? 'text-emerald-400' : 'text-rose-400'} font-medium">Votre réponse : (${ans.chosen.toUpperCase()}) ${ans.chosenText}</p>
+                        ${!isCorrect ? `<p class="text-slate-400 text-[11px] mt-0.5">Réponse correcte : (${ans.correct.toUpperCase()}) ${ans.correctText}</p>` : ''}
+                    `;
+                }
+                cList.appendChild(item);
+            });
+
+            const actionBtn = document.getElementById("action-btn");
+            if (currentLevel < 3) {
+                const nextLvl = currentLevel + 1;
+                if (!unlockedLevels.includes(nextLvl)) {
+                    unlockedLevels.push(nextLvl);
+                    document.getElementById(`status-l2`).classList.remove("opacity-40", "cursor-not-allowed");
+                    const labelL = document.getElementById(`label-l${nextLvl}`);
+                    if (labelL) labelL.innerText = nextLvl === 2 ? "Moyen" : "Difficile";
+                }
+                
+                actionBtn.innerText = "Passer au Level Suivant ➔";
+                actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition duration-150 shadow-md";
+            } else {
+                actionBtn.innerText = "Afficher le Bilan Global Final 📊";
+                actionBtn.className = "w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition duration-150 shadow-md";
+            }
+
+            if (score >= (totalQ / 2)) {
+                playVictoryMusic();
+                startVictoryFlowers();
+                document.getElementById("result-icon").innerText = "🎉";
+                document.getElementById("result-status").innerText = "Félicitations ! Objectif atteint.";
+                document.getElementById("result-status").className = "text-sm font-semibold mb-4 text-emerald-400";
+                speak(`Bravo ${prefix} ${studentName}, vous avez validé ce niveau avec un score de ${score} sur ${totalQ}.`);
+            } else {
+                playFailureMusic();
+                startFailureRain();
+                document.getElementById("result-icon").innerText = "🌧️";
+                document.getElementById("result-status").innerText = "Courage ! Vous pouvez faire mieux.";
+                document.getElementById("result-status").className = "text-sm font-semibold mb-4 text-amber-400";
+                speak(`C'est complété ${prefix} ${studentName}. Votre score est de ${score} sur ${totalQ}. Ne lâchez rien !`);
+            }
+        }
+
+        function nextAction() {
+            if (currentLevel < 3) {
+                startLevel(currentLevel + 1);
+            } else {
+                showGlobalFinalSummary();
+            }
+        }
+
+        function showGlobalFinalSummary() {
+            stopAllMusic();
+            stopVisualEffects();
+            
+            document.getElementById("result-screen").classList.add("hidden");
+            document.getElementById("home-screen").classList.add("hidden");
+            document.getElementById("final-summary-screen").classList.remove("hidden");
+
+            let totalScore = 0;
+            let totalSkipped = 0;
+            let totalAnswered = 0;
+            let totalQuestionsAllGame = 16; 
+
+            for (let i = 1; i <= 3; i++) {
+                totalScore += (scoresHistory[i] || 0);
+                totalSkipped += (skippedHistory[i] || 0);
+                totalAnswered += (answeredHistory[i] || 0);
+            }
+
+            const prefix = studentGender === 'M' ? "Monsieur" : "Mademoiselle";
+            document.getElementById("final-student-salutation").innerText = `${prefix} ${studentName}`;
+            document.getElementById("global-score-text").innerText = `${totalScore} / ${totalQuestionsAllGame}`;
+            document.getElementById("global-answered-text").innerText = totalAnswered;
+            document.getElementById("global-skipped-text").innerText = totalSkipped;
+
+            const evalBox = document.getElementById("final-evaluation-box");
+            const percentage = (totalScore / totalQuestionsAllGame) * 100;
+
+            if (percentage >= 80) {
+                evalBox.className = "p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 text-xs font-semibold mb-6";
+                evalBox.innerText = "🏆 Niveau Expert absolu ! Vos compétences numériques en Informatique de 7ème année sont exceptionnelles.";
+                speak(`Félicitations globales ${prefix} ${studentName} ! Vous êtes un véritable expert de niveau supérieur.`);
+            } else if (percentage >= 50) {
+                evalBox.className = "p-3.5 rounded-xl border border-blue-500/30 bg-blue-950/20 text-blue-400 text-xs font-semibold mb-6";
+                evalBox.innerText = "👍 Bon niveau global. Les bases du traitement automatique et des périphériques sont acquises.";
+                speak(`Bilan positif ${prefix} ${studentName}. Vous avez obtenu la moyenne globale sur le didacticiel.`);
+            } else {
+                evalBox.className = "p-3.5 rounded-xl border border-rose-500/30 bg-rose-950/20 text-rose-400 text-xs font-semibold mb-6";
+                evalBox.innerText = "📚 Des notions restent à revoir. N'hésitez pas à relire vos cours de TIC et à refaire les niveaux.";
+                speak(`Bilan final mitigé ${prefix} ${studentName}. Nous vous encourageons à recommencer le didacticiel pour vous perfectionner.`);
+            }
+        }
+
+        function goHome() {
+            stopAllMusic();
+            stopVisualEffects();
+            document.getElementById("result-screen").classList.add("hidden");
+            document.getElementById("final-summary-screen").classList.add("hidden");
+            document.getElementById("home-screen").classList.remove("hidden");
+            
+            document.body.style.backgroundColor = "#070b13";
+            const card = document.getElementById("main-card");
+            card.style.borderColor = "rgba(30, 41, 59, 1)";
+            card.style.boxShadow = "0 0 50px rgba(0,0,0,0.7)";
+        }
+
+        function restartEntireGame() {
+            unlockedLevels = [1];
+            
+            const badge2 = document.getElementById(`status-l2`);
+            badge2.classList.add("opacity-40", "cursor-not-allowed");
+            document.getElementById("label-l2").innerText = "Moyen 🔒";
+            
+            const badge3 = document.getElementById(`status-l3`);
+            badge3.classList.add("opacity-40", "cursor-not-allowed");
+            document.getElementById("label-l3").innerText = "Difficile 🔒";
+
+            goHome();
+        }
+    </script>
+</body>
+</html>
